@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nursing Connections — Module 11</title>
+<meta name="description" content="NYT Connections-style study game for nursing Module 11 community health chapters.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ════════════════════════════════
+   TOKENS
+════════════════════════════════ */
+:root {
+  --bg:       #0f0e0c;
+  --surface:  #1a1916;
+  --border:   #2e2d2a;
+  --text:     #f0ece3;
+  --muted:    #7a7570;
+  --accent:   #c8a96e;
+
+  --c0: #4a7c59;  --c0-bg: #152a1e;  --c0-text: #a8d5b5;
+  --c1: #2e6b9e;  --c1-bg: #0e2135;  --c1-text: #8ec5e8;
+  --c2: #8b4e9e;  --c2-bg: #1f1030;  --c2-text: #d4a8e8;
+  --c3: #c0492b;  --c3-bg: #2e100a;  --c3-text: #f0a090;
+}
+
+body.light {
+  --bg:       #f5f2eb;
+  --surface:  #fffef9;
+  --border:   #d8d3c8;
+  --text:     #1a1916;
+  --muted:    #8a857a;
+  --accent:   #a07840;
+
+  --c0: #3a6b49;  --c0-bg: #d8f0e0;  --c0-text: #1e4a2a;
+  --c1: #1e5a8e;  --c1-bg: #d0e8f8;  --c1-text: #0e3060;
+  --c2: #7040a0;  --c2-bg: #ead8f8;  --c2-text: #3e1060;
+  --c3: #a03820;  --c3-bg: #f8d8cc;  --c3-text: #601808;
+}
+
+/* Theme toggle button */
+.theme-toggle {
+  position: fixed;
+  top: 16px;
+  right: 18px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 10px;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  z-index: 999;
+  transition: border-color .15s, background .15s;
+}
+.theme-toggle:hover { border-color: var(--accent); }
+
+/* ════════════════════════════════
+   RESET + BASE
+════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-bottom: 64px;
+}
+
+/* ════════════════════════════════
+   HEADER
+════════════════════════════════ */
+header {
+  width: 100%;
+  max-width: 700px;
+  padding: 32px 20px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+.logo {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.8rem, 5vw, 2.8rem);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: var(--accent);
+}
+.subtitle {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.68rem;
+  color: var(--muted);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+hr.divider {
+  width: 100%;
+  max-width: 700px;
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 18px 0 0;
+}
+
+/* ════════════════════════════════
+   SCREEN WRAPPER
+════════════════════════════════ */
+.screen {
+  width: 100%;
+  max-width: 700px;
+  padding: 24px 18px 0;
+}
+.hidden { display: none !important; }
+
+/* ════════════════════════════════
+   SETUP SCREEN
+════════════════════════════════ */
+.setup-label {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  text-align: center;
+  margin-bottom: 20px;
+}
+.chapter-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.chapter-card {
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  cursor: pointer;
+  background: var(--surface);
+  transition: border-color .16s, background .16s, box-shadow .16s;
+  user-select: none;
+}
+.chapter-card:hover           { border-color: var(--accent); background: #1f1e18; }
+.chapter-card.selected        { border-color: var(--accent); background: #1f1e18; box-shadow: 0 0 0 1px var(--accent); }
+.ch-header                    { display: flex; justify-content: space-between; align-items: flex-start; }
+.ch-num                       { font-family: 'DM Mono', monospace; font-size: 0.66rem; color: var(--accent); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px; }
+.ch-title                     { font-size: 0.82rem; line-height: 1.4; }
+.ch-count                     { font-family: 'DM Mono', monospace; font-size: 0.64rem; color: var(--muted); margin-top: 8px; }
+.check-icon                   { width: 18px; height: 18px; border-radius: 50%; background: var(--accent); display: none; align-items: center; justify-content: center; font-size: 11px; color: #0f0e0c; font-weight: 700; flex-shrink: 0; }
+.chapter-card.selected .check-icon { display: flex; }
+
+.diff-legend {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.68rem;
+  color: var(--muted);
+  margin-bottom: 24px;
+}
+.diff-pip {
+  display: inline-block;
+  width: 9px; height: 9px;
+  border-radius: 2px;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+
+.btn-start {
+  display: block;
+  margin: 0 auto;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.82rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  padding: 13px 46px;
+  background: var(--accent);
+  color: #0f0e0c;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: opacity .15s;
+}
+.btn-start:hover    { opacity: 0.86; }
+.btn-start:disabled { opacity: 0.28; cursor: not-allowed; }
+
+/* ════════════════════════════════
+   GAME SCREEN
+════════════════════════════════ */
+.game-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+.ch-tags  { color: var(--accent); letter-spacing: 0.07em; }
+.mistakes-row { display: flex; align-items: center; gap: 5px; }
+.dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  transition: background .3s;
+}
+.dot.used { background: #33312e; }
+
+/* Solved banners — live inside the unified grid as full-width rows */
+.solved-banner {
+  grid-column: 1 / -1;
+  border-radius: 10px;
+  padding: 11px 16px;
+  animation: popIn .45s cubic-bezier(.34,1.56,.64,1);
+  min-height: 68px;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.sb-label { font-family: 'DM Mono', monospace; font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.7; margin-bottom: 1px; }
+.sb-cat   { font-family: 'Playfair Display', serif; font-size: 0.92rem; font-weight: 700; margin-bottom: 2px; }
+.sb-items { font-size: 0.72rem; line-height: 1.5; opacity: 0.88; }
+
+@keyframes popIn {
+  from { transform: scaleY(0.6) translateY(-8px); opacity: 0; }
+  to   { transform: scaleY(1)   translateY(0);    opacity: 1; }
+}
+
+/* Tile grid — single unified grid containing both banners and tiles */
+.tile-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.tile {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 9px;
+  padding: 6px 5px;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: clamp(0.58rem, 1.65vw, 0.76rem);
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+  transition: border-color .14s, background .14s, transform .14s, box-shadow .14s, opacity .2s;
+  line-height: 1.3;
+  word-break: break-word;
+  hyphens: auto;
+}
+.tile:hover:not(.tile-selected):not(.tile-solved) {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+.tile.tile-selected {
+  background: #242119;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+  color: var(--accent);
+}
+.tile.tile-solved {
+  opacity: 0;
+  pointer-events: none;
+  cursor: default;
+}
+.tile.shake { animation: shake .42s ease; }
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  22%     { transform: translateX(-7px); }
+  44%     { transform: translateX(7px); }
+  66%     { transform: translateX(-4px); }
+  88%     { transform: translateX(4px); }
+}
+
+/* Buttons row */
+.controls {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.btn {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 10px 20px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-weight: 500;
+  border: 1.5px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  transition: border-color .15s, opacity .15s;
+}
+.btn:hover { border-color: var(--muted); }
+.btn-accent {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0f0e0c;
+}
+.btn-accent:hover    { opacity: 0.86; }
+.btn-accent:disabled { opacity: 0.28; cursor: not-allowed; }
+
+/* ════════════════════════════════
+   END SCREEN
+════════════════════════════════ */
+.end-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.7rem, 5vw, 2.5rem);
+  font-weight: 900;
+  text-align: center;
+  margin-bottom: 8px;
+}
+.end-msg {
+  font-size: 0.85rem;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.7;
+  margin-bottom: 22px;
+}
+.result-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-bottom: 26px;
+  align-items: center;
+}
+.result-row { display: flex; gap: 7px; }
+.result-sq  { width: 38px; height: 38px; border-radius: 7px; }
+.end-buttons { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+
+/* ════════════════════════════════
+   TOAST
+════════════════════════════════ */
+#toast {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-100px);
+  background: var(--text);
+  color: var(--bg);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.76rem;
+  letter-spacing: 0.07em;
+  padding: 10px 26px;
+  border-radius: 40px;
+  font-weight: 500;
+  transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+  z-index: 9999;
+  white-space: nowrap;
+  pointer-events: none;
+}
+#toast.visible { transform: translateX(-50%) translateY(0); }
+
+/* ════════════════════════════════
+   RESPONSIVE
+════════════════════════════════ */
+@media (max-width: 480px) {
+  .chapter-grid { grid-template-columns: 1fr; }
+  .tile          { height: 58px; font-size: 0.58rem; }
+  .tile-grid     { gap: 6px; }
+}
+</style>
+</head>
+<body>
+
+<button class="theme-toggle" id="theme-toggle" title="Toggle light/dark mode">🌙</button>
+
+<!-- ══ HEADER ══ -->
+<header>
+  <div class="logo" id="logo-home" title="Back to home" style="cursor:pointer">Nursing Connections</div>
+  <div class="subtitle">Module 11 &mdash; Community Health</div>
+</header>
+<hr class="divider">
+
+<!-- ══════════════════════════════
+     SETUP SCREEN
+══════════════════════════════ -->
+<div id="screen-setup" class="screen">
+  <p class="setup-label">Select 1–4 chapters to study</p>
+  <div class="chapter-grid" id="chapter-grid"></div>
+
+  <button class="btn-start" id="btn-start" disabled>Start Game</button>
+</div>
+
+<!-- ══════════════════════════════
+     GAME SCREEN
+══════════════════════════════ -->
+<div id="screen-game" class="screen hidden">
+  <div class="game-meta">
+    <span class="ch-tags" id="ch-tags"></span>
+    <div class="mistakes-row">
+      <span>Mistakes:&nbsp;</span>
+      <div class="dot" id="dot-0"></div>
+      <div class="dot" id="dot-1"></div>
+      <div class="dot" id="dot-2"></div>
+      <div class="dot" id="dot-3"></div>
+    </div>
+  </div>
+
+  <div class="tile-grid" id="tile-grid"></div>
+
+  <div class="controls">
+    <button class="btn"        id="btn-shuffle">Shuffle</button>
+    <button class="btn"        id="btn-deselect">Deselect All</button>
+    <button class="btn btn-accent" id="btn-submit" disabled>Submit</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     END SCREEN
+══════════════════════════════ -->
+<div id="screen-end" class="screen hidden">
+  <div class="end-title" id="end-title"></div>
+  <p  class="end-msg"   id="end-msg"></p>
+  <div class="result-grid" id="result-grid"></div>
+  <div id="answers-section" style="width:100%;margin-bottom:22px;"></div>
+  <div class="end-buttons">
+    <button class="btn"        id="btn-change">Change Chapters</button>
+    <button class="btn btn-accent" id="btn-replay">Play Again</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- ══════════════════════════════
+     SCRIPT
+══════════════════════════════ -->
+<script>
+'use strict';
+
+/* ─── DATA ─────────────────────────────────────────────── */
+const DATA = [
+  // CH 30
+  { ch:'Ch 30', cat:'School health program parts',                items:['health education','physical education','health services','nutrition services'] },
+  { ch:'Ch 30', cat:'Risky teen behaviors',                       items:['alcohol use','drug use','tobacco use','risky sexual behavior'] },
+  { ch:'Ch 30', cat:'Sports injury concerns',                     items:['concussions','fractures','heat-related illness','traumatic brain injury'] },
+  { ch:'Ch 30', cat:'Dental problems',                            items:['dental caries','dental abscess','poor oral hygiene','enamel breakdown'] },
+  { ch:'Ch 30', cat:'School screenings',                          items:['Snellen test','audiometry','scoliosis screening','Adam\'s Forward Bend'] },
+  { ch:'Ch 30', cat:'Asthma and diabetes care',                   items:['Asthma Action Plan','rescue inhaler','albuterol','hypoglycemia'] },
+  { ch:'Ch 30', cat:'Signs of suicide or abuse',                  items:['isolation','giving away possessions','unexplained bruises','frequent absences'] },
+  { ch:'Ch 30', cat:'School nurse roles',                         items:['advocate','educator','case manager','researcher'] },
+  { ch:'Ch 30', cat:'School clinic services',                     items:['primary care','prescriptions','lab services','mental health care'] },
+
+  // CH 31
+  { ch:'Ch 31', cat:'Occupational hazard types',                  items:['biological hazards','chemical hazards','physical hazards','psychosocial hazards'] },
+  { ch:'Ch 31', cat:'Infectious exposure examples',               items:['hepatitis B','COVID-19','needlestick','bodily fluid splash'] },
+  { ch:'Ch 31', cat:'Chemical hazard examples',                   items:['arsenic','lead','solvents','glycol ethers'] },
+  { ch:'Ch 31', cat:'Ergonomic injury terms',                     items:['repetitive motion','nonneutral posture','back injury','carpal tunnel'] },
+  { ch:'Ch 31', cat:'Occupational health laws',                   items:['OSHA','NIOSH','Workers\' Compensation','ADA'] },
+  { ch:'Ch 31', cat:'Occupational health team members',           items:['industrial hygienist','ergonomist','human resources','EAP counselor'] },
+  { ch:'Ch 31', cat:'Occupational prevention strategies',         items:['immunizations','health screenings','preplacement exams','case management'] },
+
+  // CH 32
+  { ch:'Ch 32', cat:'Forensic nursing tasks',                     items:['violence screening','trauma assessment','evidence preservation','chain of custody'] },
+  { ch:'Ch 32', cat:'SANE responsibilities',                      items:['forensic examination','DNA swabs','clothing evidence','STI risk assessment'] },
+  { ch:'Ch 32', cat:'Death investigation terms',                  items:['cause of death','manner of death','natural death','homicide'] },
+  { ch:'Ch 32', cat:'Legal nurse consultant work',                items:['medical record review','standards of care','affidavits','depositions'] },
+  { ch:'Ch 32', cat:'Correctional nursing priorities',            items:['personal safety','escape route','contraband risk','inmate manipulation'] },
+  { ch:'Ch 32', cat:'Prison health problems',                     items:['HIV','hepatitis','tuberculosis','hypertension'] },
+  { ch:'Ch 32', cat:'Mental health in prisons',                   items:['schizophrenia','bipolar disorder','suicide risk','psychotic breaks'] },
+
+  // CH 33
+  { ch:'Ch 33', cat:'Faith community nursing basics',             items:['shalom','wholeness','spiritual care','health promotion'] },
+  { ch:'Ch 33', cat:'Spirituality and religion terms',            items:['religion','spirituality','meaning','purpose'] },
+  { ch:'Ch 33', cat:'Faith community nurse roles',                items:['health educator','referral agent','health advocate','volunteer coordinator'] },
+  { ch:'Ch 33', cat:'Vulnerable populations',                     items:['refugees','migrants','homeless persons','low-income groups'] },
+  { ch:'Ch 33', cat:'End-of-life planning terms',                 items:['living will','healthcare proxy','hospice','palliative care'] },
+  { ch:'Ch 33', cat:'Abuse and IPV concerns',                     items:['intimate partner violence','child abuse','elder abuse','mandated reporting'] },
+  { ch:'Ch 33', cat:'Confidentiality and liability issues',       items:['privacy breach','patient consent','liability insurance','record storage'] }
+];
+
+const CHAPTERS = ['Ch 30','Ch 31','Ch 32','Ch 33'];
+const CH_TITLES = {
+  'Ch 30': 'School Health Nursing',
+  'Ch 31': 'Occupational Health',
+  'Ch 32': 'Forensic & Correctional',
+  'Ch 33': 'Faith Community Nursing'
+};
+
+const DIFF_LABELS = ['Easy','Medium','Hard','Expert'];
+// Indexed 0-3 to match CSS variables --c0 through --c3
+const THEME = [
+  { border:'var(--c0)', bg:'var(--c0-bg)', text:'var(--c0-text)' },
+  { border:'var(--c1)', bg:'var(--c1-bg)', text:'var(--c1-text)' },
+  { border:'var(--c2)', bg:'var(--c2-bg)', text:'var(--c2-text)' },
+  { border:'var(--c3)', bg:'var(--c3-bg)', text:'var(--c3-text)' },
+];
+const SOLID_COLORS = ['var(--c0)','var(--c1)','var(--c2)','var(--c3)'];
+
+/* ─── STATE ────────────────────────────────────────────── */
+let selectedChapters = [];
+let groups  = [];   // {cat, ch, theme, label, words[4]}
+let tiles   = [];   // {word, groupIdx} — ordered for the grid
+let chosen  = new Set(); // tile indices currently selected
+let mistakes = 0;
+let solved   = 0;
+let guessLog = []; // each entry: array of 4 groupIdx values
+let recentlyUsed = new Set(); // category names used in last 2 games
+
+/* ─── UTILS ────────────────────────────────────────────── */
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function pickN(arr, n) { return shuffle(arr).slice(0, n); }
+
+let _toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('visible');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.classList.remove('visible'), 1900);
+}
+
+function showScreen(id) {
+  ['screen-setup','screen-game','screen-end'].forEach(s => {
+    document.getElementById(s).classList.toggle('hidden', s !== id);
+  });
+}
+
+/* ─── SETUP ────────────────────────────────────────────── */
+function buildCards() {
+  const grid = document.getElementById('chapter-grid');
+  grid.innerHTML = '';
+  CHAPTERS.forEach(ch => {
+    const n   = DATA.filter(d => d.ch === ch).length;
+    const card = document.createElement('div');
+    card.className = 'chapter-card';
+    card.dataset.ch = ch;
+    card.innerHTML = `
+      <div class="ch-header">
+        <div class="ch-num">${ch}</div>
+        <div class="check-icon">✓</div>
+      </div>
+      <div class="ch-title">${CH_TITLES[ch]}</div>
+      <div class="ch-count">${n} categories</div>`;
+    card.addEventListener('click', () => toggleCard(ch, card));
+    grid.appendChild(card);
+  });
+}
+
+function toggleCard(ch, card) {
+  if (selectedChapters.includes(ch)) {
+    selectedChapters = selectedChapters.filter(c => c !== ch);
+    card.classList.remove('selected');
+  } else {
+    if (selectedChapters.length >= 4) { toast('Max 4 chapters'); return; }
+    selectedChapters.push(ch);
+    card.classList.add('selected');
+  }
+  recentlyUsed = new Set(); // fresh pool when chapters change
+  document.getElementById('btn-start').disabled = selectedChapters.length === 0;
+}
+
+/* ─── GAME START ───────────────────────────────────────── */
+function startGame() {
+  if (!selectedChapters.length) return;
+
+  // Pick 4 categories spread across chapters
+  const pool = DATA.filter(d => selectedChapters.includes(d.ch));
+  const pickedCats = pickGroups(pool, 4);
+  const shuffledCats = shuffle(pickedCats); // randomise which gets which difficulty
+
+  groups = shuffledCats.map((cat, i) => ({
+    cat:   cat.cat,
+    ch:    cat.ch,
+    theme: THEME[i],
+    label: DIFF_LABELS[i],
+    words: pickN(cat.items, 4)
+  }));
+
+  // Build flat tile list
+  const raw = [];
+  groups.forEach((g, gi) => g.words.forEach(w => raw.push({ word: w, groupIdx: gi })));
+  tiles = shuffle(raw);
+
+  chosen   = new Set();
+  mistakes = 0;
+  solved   = 0;
+  guessLog = [];
+
+  document.getElementById('tile-grid').innerHTML = '';
+  renderGrid();
+  refreshDots();
+
+  document.getElementById('btn-submit').disabled = true;
+
+  showScreen('screen-game');
+}
+
+function pickGroups(pool, n) {
+  // Prefer categories not used in recent games
+  const byChapter = {};
+  pool.forEach(d => { (byChapter[d.ch] = byChapter[d.ch] || []).push(d); });
+
+  const result = [];
+  const chs = [...selectedChapters];
+
+  // Two passes: first avoid recently used, then fill from remainder if needed
+  for (const pass of ['fresh', 'fallback']) {
+    for (let round = 0; result.length < n; round++) {
+      let added = false;
+      for (const ch of chs) {
+        if (result.length >= n) break;
+        const avail = (byChapter[ch] || []).filter(d =>
+          !result.includes(d) &&
+          (pass === 'fallback' || !recentlyUsed.has(d.cat))
+        );
+        if (avail.length) { result.push(pickN(avail, 1)[0]); added = true; }
+      }
+      if (!added || round > 10) break;
+    }
+    if (result.length >= n) break;
+  }
+
+  const picked = result.slice(0, n);
+
+  // Update recentlyUsed — remember last 2 rounds worth of categories (8 cats max)
+  picked.forEach(d => recentlyUsed.add(d.cat));
+  if (recentlyUsed.size > n * 2) {
+    // Drop oldest entries by rebuilding from scratch keeping only recent ones
+    const all = [...recentlyUsed];
+    recentlyUsed = new Set(all.slice(all.length - n * 2));
+  }
+
+  return picked;
+}
+
+/* ─── RENDER GRID ──────────────────────────────────────── */
+function renderGrid() {
+  const grid = document.getElementById('tile-grid');
+  tiles.forEach((t, i) => {
+    const el = document.createElement('div');
+    el.className = 'tile';
+    el.textContent = t.word;
+    el.addEventListener('click', () => toggleTile(i, el));
+    t.el = el;
+    grid.appendChild(el);
+  });
+}
+
+function toggleTile(i, el) {
+  if (!tiles[i].el) return; // already solved/removed
+  if (chosen.has(i)) {
+    chosen.delete(i);
+    el.classList.remove('tile-selected');
+  } else {
+    if (chosen.size >= 4) { toast('Pick exactly 4'); return; }
+    chosen.add(i);
+    el.classList.add('tile-selected');
+  }
+  document.getElementById('btn-submit').disabled = chosen.size !== 4;
+}
+
+function deselectAll() {
+  chosen.forEach(i => tiles[i].el && tiles[i].el.classList.remove('tile-selected'));
+  chosen.clear();
+  document.getElementById('btn-submit').disabled = true;
+}
+
+function doShuffle() {
+  const grid  = document.getElementById('tile-grid');
+  const alive = tiles.filter(t => t.el);
+  shuffle(alive).forEach(t => grid.appendChild(t.el));
+}
+
+function refreshDots() {
+  for (let i = 0; i < 4; i++) {
+    const d = document.getElementById('dot-' + i);
+    if (d) d.className = 'dot' + (i < mistakes ? ' used' : '');
+  }
+}
+
+/* ─── SUBMIT ───────────────────────────────────────────── */
+function submitGuess() {
+  if (chosen.size !== 4) return;
+
+  const idxArr    = [...chosen];
+  const groupIdxs = idxArr.map(i => tiles[i].groupIdx);
+  const uniq      = new Set(groupIdxs);
+
+  guessLog.push([...groupIdxs]);
+
+  if (uniq.size === 1) {
+    // ✅ Correct
+    const gi = groupIdxs[0];
+    solveGroup(gi, idxArr);
+    deselectAll();
+    solved++;
+    if (solved === 4) setTimeout(endGame, 500);
+  } else {
+    // ❌ Wrong
+    const counts = {};
+    groupIdxs.forEach(g => counts[g] = (counts[g] || 0) + 1);
+    const best = Math.max(...Object.values(counts));
+    if (best === 3) toast('One away…');
+    else            toast('Not quite!');
+
+    idxArr.forEach(i => {
+      const el = tiles[i].el;
+      if (!el) return;
+      el.classList.add('shake');
+      setTimeout(() => el.classList.remove('shake'), 500);
+    });
+
+    mistakes++;
+    refreshDots();
+    if (mistakes >= 4) setTimeout(endGame, 500);
+  }
+}
+
+function solveGroup(gi, idxArr) {
+  const g     = groups[gi];
+  const words = g.words.join(', ');
+  const grid  = document.getElementById('tile-grid');
+
+  // Remove the 4 solved tiles from the DOM
+  idxArr.forEach(i => {
+    const el = tiles[i].el;
+    if (el) el.remove();
+    tiles[i].el = null;
+  });
+
+  // Build banner (spans all 4 columns via CSS grid-column: 1/-1)
+  const banner = document.createElement('div');
+  banner.className = 'solved-banner';
+  banner.style.cssText = `background:${g.theme.bg};border:1.5px solid ${g.theme.border}`;
+  banner.innerHTML = `
+    <div class="sb-label" style="color:${g.theme.text}">${g.ch}</div>
+    <div class="sb-cat"   style="color:${g.theme.text}">${g.cat}</div>
+    <div class="sb-items" style="color:${g.theme.text}">${words}</div>`;
+
+  // Insert at the very start of the grid so banners stack at the top
+  grid.insertBefore(banner, grid.firstChild);
+}
+
+/* ─── END SCREEN ───────────────────────────────────────── */
+function endGame() {
+  showScreen('screen-end');
+
+  const won  = mistakes < 4;
+  const msgs = ['Perfect — no mistakes! 🏆','Outstanding — only 1 mistake.','Great — just 2 mistakes.','Close — 3 mistakes.','Keep studying and try again!'];
+  document.getElementById('end-title').textContent = won ? 'Well done! 🎉' : 'Game Over';
+  document.getElementById('end-msg').textContent   = msgs[Math.min(mistakes, 4)];
+
+  // Colour squares replay
+  const rg = document.getElementById('result-grid');
+  rg.innerHTML = '';
+  guessLog.forEach(guess => {
+    const row = document.createElement('div');
+    row.className = 'result-row';
+    guess.forEach(gi => {
+      const sq = document.createElement('div');
+      sq.className = 'result-sq';
+      sq.style.background = SOLID_COLORS[gi] || '#444';
+      row.appendChild(sq);
+    });
+    rg.appendChild(row);
+  });
+
+  // Show all correct answers
+  const ans = document.getElementById('answers-section');
+  ans.innerHTML = '<div style="font-family:\'DM Mono\',monospace;font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);text-align:center;margin-bottom:12px;">— Correct Answers —</div>';
+  ans.style.display = 'flex';
+  ans.style.flexDirection = 'column';
+  ans.style.gap = '8px';
+  groups.forEach((g, i) => {
+    const banner = document.createElement('div');
+    banner.className = 'solved-banner';
+    banner.style.cssText = `background:${g.theme.bg};border:1.5px solid ${g.theme.border}`;
+    banner.innerHTML = `
+      <div class="sb-label" style="color:${g.theme.text}">${g.ch}</div>
+      <div class="sb-cat"   style="color:${g.theme.text}">${g.cat}</div>
+      <div class="sb-items" style="color:${g.theme.text}">${g.words.join(', ')}</div>`;
+    ans.appendChild(banner);
+  });
+}
+
+/* ─── WIRE BUTTONS ─────────────────────────────────────── */
+document.getElementById('btn-start').addEventListener('click', startGame);
+document.getElementById('btn-shuffle').addEventListener('click', doShuffle);
+document.getElementById('btn-deselect').addEventListener('click', deselectAll);
+document.getElementById('btn-submit').addEventListener('click', submitGuess);
+document.getElementById('btn-change').addEventListener('click', () => showScreen('screen-setup'));
+document.getElementById('btn-replay').addEventListener('click', startGame);
+
+document.getElementById('logo-home').addEventListener('click', () => showScreen('screen-setup'));
+
+// Theme toggle
+const themeBtn = document.getElementById('theme-toggle');
+themeBtn.addEventListener('click', () => {
+  document.body.classList.toggle('light');
+  themeBtn.textContent = document.body.classList.contains('light') ? '🌙' : '☀️';
+});
+
+/* ─── INIT ──────────────────────────────────────────────── */
+buildCards();
+</script>
+</body>
+</html>
